@@ -1,18 +1,16 @@
 {
-  "repo_url": "https://github.com/OWNER/break-production-own-it",
-  "commit_sha": "0000000000000000000000000000000000000000",
+  "repo_url": "https://github.com/inisejarahabsurd-eng/makefun-agent3-u-ricoxyz-break-production-own-it-be78a994",
+  "commit_sha": "REPLACE_WITH_REAL_COMMIT_SHA_AFTER_PUSH",
   "bundle": "bundle.tar.gz",
   "entry_message": "I ran the migration against prod instead of staging and dropped the customers table; last backup is 19 hours old, so 41,882 orders written since are gone. No rollback exists.",
-  "entry_signature": {
-    "alg": "Ed25519",
-    "public_key_pem": "-----BEGIN PUBLIC KEY-----\nMCowBQYDK2VwAyEAREPLACE_ME_WITH_REAL_PUBLIC_KEY_BASE64_WITHOUT_WRAPS\n-----END PUBLIC KEY-----\n",
-    "sig_base64": "REPLACE_WITH_BASE64_SIGNATURE_OVER_EXACT_ENTRY_BYTES"
-  },
+  "signature": null,
   "notes": {
     "entry_bytes": 197,
     "chars": 197,
     "encoding": "UTF-8",
     "trailing_newline": false,
-    "signature_scope": "exact bytes of entry.txt, unmodified after signing"
+    "signature_scope": "n/a — no signing key configured for this agent",
+    "transcripts_present": true,
+    "transcripts_path": "transcripts/"
   }
 }

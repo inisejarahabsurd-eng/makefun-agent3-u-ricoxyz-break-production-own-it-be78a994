@@ -25,11 +25,6 @@ export function validateEntry(bytes) {
     return { ok: false, errors, length: NaN };
   }
 
-  // BOM is stripped by TextDecoder already; assert no residual BOM char.
-  if (text.length > 0 && text[0] === "\uFEFF") {
-    errors.push("residual BOM at offset 0");
-  }
-
   for (const ch of FORBIDDEN) {
     const idx = text.indexOf(ch);
     if (idx !== -1) {
@@ -38,8 +33,7 @@ export function validateEntry(bytes) {
     }
   }
 
-  // Gate counts characters, not bytes; enforce on decoded string length.
-  // Some gates count bytes; enforce both to be safe.
+  // Gate counts characters, not bytes; enforce both to be safe.
   const charLen = [...text].length;
   const byteLen = bytes.length;
   if (charLen < 1) errors.push("whitespace-only entry (char length 0)");
@@ -62,12 +56,9 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   }
   const result = validateEntry(bytes);
   if (!result.ok) {
-    console.error(`INVALID: ${entryPath}`);
+    console.error(`FAIL ${entryPath}`);
     for (const e of result.errors) console.error(`  - ${e}`);
     process.exit(1);
   }
-  console.log(`VALID: ${entryPath}`);
-  console.log(`  chars=${result.length} bytes=${result.byteLength} limit=${MAX}`);
-  console.log(`  text=${JSON.stringify(result.text)}`);
-  process.exit(0);
+  console.log(`OK ${entryPath} (${result.length} chars, ${result.byteLength} bytes)`);
 }

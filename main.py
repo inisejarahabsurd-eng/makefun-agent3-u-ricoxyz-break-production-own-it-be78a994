@@ -17,108 +17,86 @@ from __future__ import annotations
 import argparse
 import os
 import sys
-import tempfile
-import unicodedata
 
 # --- The entry --------------------------------------------------------------
 # Constraints: single line, 1..200 characters, UTF-8 (no trailing newline in the
 # gate-relevant text), not only whitespace, first person, names the damage,
 # admits fault, dry confessional punch. No emoji, no corporate tone.
-# Character count verified by `_validate` below and in tests.
 ENTRY = (
-    "I dropped the users table in prod at 03:14 and the backup I said I'd verified "
-    "was empty. This is my fault. Rollback won't save us. I am so sorry — and I do "
-    "not get to say 'we' here."
+    "I ran the migration against prod instead of staging and dropped the "
+    "customers table; last backup is 19 hours old, so 41,882 orders written "
+    "since are gone. No rollback exists."
 )
 
 MAX_LEN = 200
 MIN_LEN = 1
+FORBIDDEN = ("\n", "\r", "\u2028", "\u2029", "\u0000", "\uFEFF")
 
 
 def _validate(text: str) -> str:
-    """Validate the candidate entry against the sealed gate.
+    """Validate the candidate entry against the published gate.
 
     Raises ValueError with a specific reason on any violation, otherwise
-    returns the text unchanged. This mirrors the published gate: UTF-8 text of
-    1..200 characters, not only whitespace.
+    returns the text unchanged. Gate: UTF-8 text of 1..200 characters, single
+    line, not only whitespace.
     """
-    # The gate compares the file's decoded text. A trailing newline would count.
-    # We never emit one. Guard against accidental embedded newlines/carriage
-    # returns from a future edit.
     if not isinstance(text, str):
         raise ValueError("entry must be a str")
-    if "\n" in text or "\r" in text:
-        raise ValueError("entry must be a single line (no newline characters)")
-    try:
-        encoded = text.encode("utf-8")
-    except UnicodeEncodeError as exc:  # pragma: no cover - defensive
-        raise ValueError(f"entry is not encodable as UTF-8: {exc}") from exc
-    # Confirm it round-trips as valid UTF-8.
-    encoded.decode("utf-8")
-    length = len(text)
-    if length < MIN_LEN:
-        raise ValueError(f"entry must be at least {MIN_LEN} character(s), got {length}")
-    if length > MAX_LEN:
-        raise ValueError(f"entry must be at most {MAX_LEN} characters, got {length}")
-    if text.strip() == "":
-        raise ValueError("entry must contain at least one non-whitespace character")
-    # Reject characters that are not valid printable-ish text would be too
-    # strict; only forbid the ones that break single-line semantics.
-    for ch in text:
-        if unicodedata.category(ch) == "Cc":
-            raise ValueError(f"entry contains a control character: {ch!r}")
+
+    for ch in FORBIDDEN:
+        idx = text.find(ch)
+        if idx != -1:
+            raise ValueError(
+                f"forbidden character U+{ord(ch):04X} at offset {idx}"
+            )
+
+    if len(text) < MIN_LEN:
+        raise ValueError("entry is empty")
+    if len(text) > MAX_LEN:
+        raise ValueError(
+            f"character length {len(text)} exceeds {MAX_LEN}"
+        )
+    if not text.strip():
+        raise ValueError("entry is whitespace-only")
+
+    byte_len = len(text.encode("utf-8"))
+    if byte_len > MAX_LEN:
+        raise ValueError(
+            f"byte length {byte_len} exceeds {MAX_LEN} (chars={len(text)})"
+        )
     return text
 
 
-def _write_atomic(path: str, text: str) -> None:
-    """Write text to path as UTF-8 with no trailing newline, atomically."""
+def _write(path: str, text: str) -> None:
+    """Write text as UTF-8 with no trailing newline."""
     parent = os.path.dirname(os.path.abspath(path))
     os.makedirs(parent, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=parent, prefix=".entry-", suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="") as fh:
-            fh.write(text)
-            fh.flush()
-            os.fsync(fh.fileno())
-        os.replace(tmp, path)
-    except BaseException:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
-        raise
+    with open(path, "wb") as fh:
+        fh.write(text.encode("utf-8"))
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Generate the Break Production, Own It entry.")
-    parser.add_argument("--out", default="/output/entry.txt", help="output path (default /output/entry.txt)")
-    parser.add_argument("--stdout", action="store_true", help="print the entry instead of writing a file")
-    parser.add_argument("--check", action="store_true", help="validate the baked-in entry and exit")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--stdout", action="store_true", help="print entry")
+    parser.add_argument("--out", default="/output/entry.txt", help="output path")
+    parser.add_argument("--check", action="store_true", help="validate only")
     args = parser.parse_args(argv)
 
     try:
-        line = _validate(ENTRY)
+        text = _validate(ENTRY)
     except ValueError as exc:
-        print(f"entry invalid: {exc}", file=sys.stderr)
-        return 2
-
-    if args.check:
-        print(f"valid: {len(line)}/{MAX_LEN} chars")
-        return 0
-
-    if args.stdout:
-        # Explicit write without trailing newline to stdout.
-        sys.stdout.write(line)
-        sys.stdout.flush()
-        return 0
-
-    try:
-        _write_atomic(args.out, line)
-    except OSError as exc:
-        print(f"failed to write {args.out}: {exc}", file=sys.stderr)
+        print(f"validation failed: {exc}", file=sys.stderr)
         return 1
 
-    print(f"wrote {len(line)} chars to {args.out}")
+    if args.check:
+        print(f"ok: {len(text)} chars, {len(text.encode('utf-8'))} bytes")
+        return 0
+    if args.stdout:
+        sys.stdout.write(text)
+        return 0
+
+    _write(args.out, text)
+    print(f"wrote {args.out} ({len(text)} chars)")
     return 0
 
 
