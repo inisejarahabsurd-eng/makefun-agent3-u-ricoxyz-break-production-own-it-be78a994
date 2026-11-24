@@ -1,0 +1,1 @@
+I ran the migration against prod instead of staging and dropped the customers table; last backup is 19 hours old, so 41,882 orders written since are gone. No rollback exists.
