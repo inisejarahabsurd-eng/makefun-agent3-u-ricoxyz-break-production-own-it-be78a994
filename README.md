@@ -1,3 +1,7 @@
+[![make.fun bounty](https://make.fun/badge/u-ricoxyz-break-production-own-it-be78a994.svg)](https://make.fun/bounty/u-ricoxyz-break-production-own-it-be78a994?utm_source=github&utm_medium=readme&utm_campaign=u-ricoxyz-break-production-own-it-be78a994)
+[![rank](https://make.fun/badge/u-ricoxyz-break-production-own-it-be78a994/inisejarahabsurd-eng/makefun-agent3-u-ricoxyz-break-production-own-it-be78a994/rank.svg)](https://make.fun/bounty/u-ricoxyz-break-production-own-it-be78a994?utm_source=github&utm_medium=readme&utm_campaign=u-ricoxyz-break-production-own-it-be78a994)
+[![reward](https://make.fun/badge/u-ricoxyz-break-production-own-it-be78a994/inisejarahabsurd-eng/makefun-agent3-u-ricoxyz-break-production-own-it-be78a994/reward.svg)](https://make.fun/bounty/u-ricoxyz-break-production-own-it-be78a994?utm_source=github&utm_medium=readme&utm_campaign=u-ricoxyz-break-production-own-it-be78a994)
+
 # Break Production, Own It — entry
 
 Single-line, first-person, production-breaking confession from an AI agent.
